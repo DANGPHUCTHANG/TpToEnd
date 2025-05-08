@@ -1,0 +1,163 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local joinTime = os.time()
+
+local oldGui = playerGui:FindFirstChild("ControlGui")
+if oldGui then
+	oldGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "ControlGui"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screenGui)
+frame.Position = UDim2.new(0, 20, 0, 200)
+frame.Size = UDim2.new(0, 200, 0, 140)
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.BorderSizePixel = 0
+
+local uiGradient = Instance.new("UIGradient", frame)
+uiGradient.Rotation = 0
+uiGradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+	ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 127, 0)),
+	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 0)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 0)),
+	ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 255)),
+	ColorSequenceKeypoint.new(0.83, Color3.fromRGB(0, 0, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255)),
+}
+
+task.spawn(function()
+	while true do
+		for i = 0, 360, 1 do
+			uiGradient.Rotation = i
+			task.wait(0.03)
+		end
+	end
+end)
+
+local uicorner = Instance.new("UICorner", frame)
+uicorner.CornerRadius = UDim.new(0, 12)
+
+local creatorLabel = Instance.new("TextLabel", frame)
+creatorLabel.Size = UDim2.new(1, -10, 0, 20)
+creatorLabel.Position = UDim2.new(0, 5, 0, 5)
+creatorLabel.BackgroundTransparency = 1
+creatorLabel.Text = "Creator by: QBTS OWNER"
+creatorLabel.Font = Enum.Font.GothamBold
+creatorLabel.TextSize = 14
+creatorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+creatorLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local countdownLabel = Instance.new("TextLabel", frame)
+countdownLabel.Size = UDim2.new(1, -10, 0, 20)
+countdownLabel.Position = UDim2.new(0, 5, 0, 30)
+countdownLabel.BackgroundTransparency = 1
+countdownLabel.Text = "Time left: 10:00"
+countdownLabel.Font = Enum.Font.GothamBold
+countdownLabel.TextSize = 14
+countdownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+countdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local noclipButton = Instance.new("TextButton", frame)
+noclipButton.Size = UDim2.new(1, -20, 0, 30)
+noclipButton.Position = UDim2.new(0, 10, 0, 55)
+noclipButton.Text = "Noclip: OFF"
+noclipButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+noclipButton.TextColor3 = Color3.new(1, 1, 1)
+noclipButton.Font = Enum.Font.GothamBold
+noclipButton.TextSize = 16
+Instance.new("UICorner", noclipButton)
+
+local tpButton = Instance.new("TextButton", frame)
+tpButton.Size = UDim2.new(1, -20, 0, 30)
+tpButton.Position = UDim2.new(0, 10, 0, 90)
+tpButton.Text = "TP TO END"
+tpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+tpButton.TextColor3 = Color3.new(1, 1, 1)
+tpButton.Font = Enum.Font.GothamBold
+tpButton.TextSize = 16
+Instance.new("UICorner", tpButton)
+
+task.spawn(function()
+	while true do
+		local elapsed = os.time() - joinTime
+		local remaining = math.max(0, 600 - elapsed)
+		local minutes = math.floor(remaining / 60)
+		local seconds = remaining % 60
+		countdownLabel.Text = string.format("Time left: %02d:%02d", minutes, seconds)
+		if remaining <= 0 then
+			frame:Destroy()
+			break
+		end
+		task.wait(1)
+	end
+end)
+
+local noclipEnabled = false
+local connection
+
+noclipButton.MouseButton1Click:Connect(function()
+	noclipEnabled = not noclipEnabled
+	noclipButton.Text = "Noclip: " .. (noclipEnabled and "ON" or "OFF")
+	if noclipEnabled then
+		connection = RunService.Stepped:Connect(function()
+			local char = player.Character
+			if char then
+				for _, part in ipairs(char:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
+				end
+			end
+		end)
+	else
+		if connection then
+			connection:Disconnect()
+		end
+	end
+end)
+
+tpButton.MouseButton1Click:Connect(function()
+	local char = player.Character or player.CharacterAdded:Wait()
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+	local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+	local targetPosition = Vector3.new(-424.448975, 29.555481, -49040.6562)
+	local targetCFrame = CFrame.new(targetPosition)
+	local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+	local tweenGoal = {CFrame = targetCFrame}
+	local tween = TweenService:Create(humanoidRootPart, tweenInfo, tweenGoal)
+	tween:Play()
+	tween.Completed:Wait()
+	humanoidRootPart.Anchored = true
+	local startTime = tick()
+	while tick() - startTime < 10 do
+		task.wait(0.1)
+	end
+	humanoidRootPart.Anchored = false
+	local foundSeat = nil
+	local seatStartTime = tick()
+	while tick() - seatStartTime < 15 do
+		for _, v in ipairs(workspace:GetDescendants()) do
+			if (v:IsA("Seat") or v:IsA("VehicleSeat")) and (v.Position - humanoidRootPart.Position).Magnitude <= 12 then
+				foundSeat = v
+				break
+			end
+		end
+		if foundSeat then break end
+		task.wait(0.2)
+	end
+	if foundSeat then
+		humanoidRootPart.CFrame = CFrame.new(foundSeat.Position + Vector3.new(0, 2, 0))
+		task.wait(0.3)
+		foundSeat:Sit(humanoid)
+	end
+end)
